@@ -81,10 +81,12 @@ func main() {
 				upstream = "http://ftp.plusline.de"
 			} else if strings.HasPrefix(r.URL.Path, "/fedora-epel/") {
 				upstream = "http://ftp.plusline.de"
+			} else if strings.HasPrefix(r.URL.Path, "/epel/") {
+				upstream = "http://ftp.plusline.de"
 			}
 
 			if upstream == "" {
-				fmt.Println("no upstream found for url", r.URL.Path)
+				log.Println("no upstream found for url", r.URL.Path)
 				return HTTPError(404)
 			}
 
@@ -95,6 +97,7 @@ func main() {
 
 				_, err := os.Stat(local_path)
 				if err == nil {
+					log.Println("C->", local_path)
 					fileserver.ServeHTTP(w, r)
 					return nil
 				}
@@ -105,6 +108,7 @@ func main() {
 
 			req, err := http.NewRequest("GET", upstreamurl, nil)
 			if err != nil {
+				log.Println(err)
 				return err
 			}
 
@@ -118,6 +122,7 @@ func main() {
 
 			resp, err := http_client.Do(req)
 			if err != nil {
+				log.Println(err)
 				return err
 			}
 			defer resp.Body.Close()
@@ -129,6 +134,7 @@ func main() {
 			if resp.StatusCode == 200 && local_path != "" {
 				tmp, err := ioutil.TempFile(data, "remirror_tmp_")
 				if err != nil {
+					log.Println(err)
 					return err
 				}
 				tmp_path = tmp.Name()
@@ -172,7 +178,7 @@ func main() {
 					log.Println(err)
 					return nil
 				}
-				log.Println(">:)")
+				log.Println("File Cached!")
 			}
 
 			return nil
@@ -219,6 +225,30 @@ func centos_mirrorlist(w http.ResponseWriter, r *http.Request, host string) erro
 	return nil
 }
 
+func epel_mirrorlist(w http.ResponseWriter, r *http.Request, host string) error {
+	log.Println("EPEL Mirrorlist: " + host)
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	release := r.Form.Get("release")
+	arch := r.Form.Get("arch")
+
+	w.Header().Set("Content-Type", "text/plain")
+
+	us := "http://" + host + "/epel/" + release + "/" + arch + "/"
+
+	if _, err := io.WriteString(w, us); err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	log.Println("===", us)
+	return nil
+}
+
 func fedora_mirrorlist(w http.ResponseWriter, r *http.Request, host string) error {
 
 	err := r.ParseForm()
@@ -229,9 +259,9 @@ func fedora_mirrorlist(w http.ResponseWriter, r *http.Request, host string) erro
 	repo := r.Form.Get("repo")
 	arch := r.Form.Get("arch")
 
-	upstream := "https://mirrors.fedoraproject.org" + r.RequestURI
+	upstream := r.RequestURI
 
-	log.Println("---", upstream)
+	log.Println("F--", upstream)
 
 	req, err := http.NewRequest("GET", upstream, nil)
 	if err != nil {
@@ -261,7 +291,7 @@ func fedora_mirrorlist(w http.ResponseWriter, r *http.Request, host string) erro
 	us := ""
 
 	if start != -1 && end != -1 && repo == "epel-7" {
-		us = `http://` + host + `/fedora-epel/7/` + arch + `/repodata/repomd.xml`
+		us = `http://` + host + `/epel/7/` + arch + `/repodata/repomd.xml`
 		s = s[:start] +
 			`<resources maxconnections="1"><url protocol="http" type="http" location="US" preference="100">` +
 			us +
