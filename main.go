@@ -50,7 +50,7 @@ func main() {
 
 	flag.StringVar(&listen, "listen", ":80", "HTTP listen address")
 	flag.StringVar(&data, "data", "/var/remirror", "Data storage path (data in here is public)")
-	flag.StringVar(&host, "host", "9ex-dc-mirror", "This hosts name, so we can return a mirrorlist with ourselves")
+	flag.StringVar(&host, "host", "172.22.1.159", "This hosts name, so we can return a mirrorlist with ourselves")
 
 	flag.Parse()
 
@@ -58,7 +58,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
-		log.Println(r.Method + " http://" + r.Host + r.RequestURI)
+		log.Println(r.Method + " " + r.RequestURI)
 
 		err := func() error {
 
@@ -76,13 +76,11 @@ func main() {
 			if strings.HasPrefix(r.URL.Path, "/archlinux/") {
 				upstream = "https://mirrors.xmission.com"
 			} else if strings.HasPrefix(r.URL.Path, "/centos/") {
-				upstream = "https://mirrors.xmission.com"
+				upstream = "http://ftp.plusline.de"
 			} else if strings.HasPrefix(r.URL.Path, "/fedora/") {
-				upstream = "https://mirrors.xmission.com"
+				upstream = "http://ftp.plusline.de"
 			} else if strings.HasPrefix(r.URL.Path, "/fedora-epel/") {
-				upstream = "https://mirrors.xmission.com"
-			} else if strings.HasPrefix(r.URL.Path, "/experticity/") {
-				upstream = "http://yum"
+				upstream = "http://ftp.plusline.de"
 			}
 
 			if upstream == "" {
@@ -102,9 +100,10 @@ func main() {
 				}
 			}
 
-			log.Println("-->", upstream+r.RequestURI)
+			upstreamurl := upstream + r.URL.Path
+			log.Println("-->", upstreamurl)
 
-			req, err := http.NewRequest("GET", upstream+r.RequestURI, nil)
+			req, err := http.NewRequest("GET", upstreamurl, nil)
 			if err != nil {
 				return err
 			}
@@ -204,7 +203,7 @@ func centos_mirrorlist(w http.ResponseWriter, r *http.Request, host string) erro
 	arch := r.Form.Get("arch")
 
 	if release == "7" {
-		release = "7.2.1511"
+		release = "7.3.1611"
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
