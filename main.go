@@ -83,7 +83,10 @@ func main() {
 				upstream = "http://ftp.plusline.de"
 			} else if strings.HasPrefix(r.URL.Path, "/epel/") {
 				upstream = "http://ftp.plusline.de"
+			} else if r.Host == "debuginfo.centos.org" {
+				upstream = "debuginfo.centos.org"
 			}
+
 
 			if upstream == "" {
 				log.Println("no upstream found for url", r.URL.Path)
