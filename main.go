@@ -48,7 +48,7 @@ func main() {
 		host   string
 	)
 
-	flag.StringVar(&listen, "listen", ":80", "HTTP listen address")
+	flag.StringVar(&listen, "listen", ":1080", "HTTP listen address")
 	flag.StringVar(&data, "data", "/var/remirror", "Data storage path (data in here is public)")
 	flag.StringVar(&host, "host", "172.22.1.159", "This hosts name, so we can return a mirrorlist with ourselves")
 
@@ -178,7 +178,7 @@ func main() {
 					log.Println(err)
 					return nil
 				}
-				log.Println("File Cached!")
+				log.Println("->C " + local_path)
 			}
 
 			return nil
